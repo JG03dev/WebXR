@@ -12,8 +12,8 @@ export default {
     https: true,
   },
   build: {
-    outDir: "../dist", // Output in the dist/ folder
-    emptyOutDir: true, // Empty the folder first
+    outDir: "..", // Output in the dist/ folder
+    emptyOutDir: false, // Empty the folder first
     sourcemap: true, // Add sourcemap
   },
   plugins: [
