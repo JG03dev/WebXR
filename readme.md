@@ -16,8 +16,7 @@ This template uses Three.js and WebXR to provide an immersive 3D painting experi
 
 1. Clone the repository:
 ```sh
-git clone https://github.com/yourusername/mx-ink-webxr.git
-cd mx-ink-webxr
+npm run build
 ```
 
 2. Install dependencies:

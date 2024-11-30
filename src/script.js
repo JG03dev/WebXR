@@ -15,7 +15,7 @@ let isDrawing = false;
 let prevIsDrawing = false;
 
 // Remove the existing material declaration and replace with:
-let currentColor = new THREE.Color(0xfff000); // Start with red
+let currentColor = new THREE.Color(0xffffff); // Start with red
 
 // Create a function to generate new material with a color
 function createStrokeMaterial(color) {
