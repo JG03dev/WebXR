@@ -89,8 +89,8 @@ function init() {
   const plane = new THREE.Mesh(geometry, materialPlane);
 
   // Rotar el plano para que sea vertical
-  plane.rotation.x = -Math.PI / 2; // -90 grados sobre el eje X
-  plane.position.y = 1; // Elevarlo un poco para que esté a la altura de la cámara
+  plane.rotation.y = -Math.PI / 2; // -90 grados sobre el eje X
+  plane.position.x = 1; // Elevarlo un poco para que esté a la altura de la cámara
 
 // Añadir el plano a la escena
   scene.add(plane);
