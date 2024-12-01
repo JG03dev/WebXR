@@ -86,7 +86,7 @@ function init() {
   scene.add(controller2);
 
   // Crear el plano vertical (orientado verticalmente)
-  const geometry = new THREE.PlaneGeometry(2, 2);  // Plane con dimensiones 2x2
+  const geometry = new THREE.PlaneGeometry(3, 2);  // Plane con dimensiones 2x2
   const textureLoader = new THREE.TextureLoader();
 
   const texture = textureLoader.load('textures/Barcos.jpg'); // Ruta de tu imagen
