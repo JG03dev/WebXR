@@ -71,10 +71,10 @@ function init() {
   controller1.addEventListener("connected", onControllerConnected);
   controller1.addEventListener("selectstart", onSelectStart);
   controller1.addEventListener("selectend", onSelectEnd);
-  
+  /*
   // Evento para guardar la imagen
   controller1.addEventListener("selectstart", onCaptureImage);
-
+  */
   controllerGrip1 = renderer.xr.getControllerGrip(0);
   controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
   scene.add(controllerGrip1);
@@ -178,6 +178,10 @@ function handleDrawing(controller) {
 
       painter.lineTo(cursor);
       painter.update();
+    }
+
+    if (gamepad1.buttons[1].pressed) { // Suponiendo que el botón 1 se usa para capturar
+      onCaptureImage();
     }
   }
 }
