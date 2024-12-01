@@ -21,7 +21,7 @@ class AudioHandler {
         const geometry = new THREE.CircleGeometry(0.05, 32);
         const material = new THREE.MeshBasicMaterial({ 
             color: 0xff0000,
-            transparent: true,
+            transparent: false,
             opacity: 0.8
         });
         this.audioIcon = new THREE.Mesh(geometry, material);
