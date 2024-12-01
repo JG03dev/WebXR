@@ -4,7 +4,9 @@ import { XRButton } from "three/examples/jsm/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/examples/jsm/webxr/XRControllerModelFactory.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { AudioHandler } from './audioHandler.js';
 
+let audioHandler;
 let camera, scene, renderer;
 let controller1, controller2;
 let controllerGrip1, controllerGrip2;
@@ -90,11 +92,27 @@ function init() {
 
   // Rotar el plano para que sea vertical
   plane.rotation.y = -Math.PI; // -90 grados sobre el eje X
-  plane.position.y = 0,5;
+  plane.position.y = 2;
   plane.position.z = -1;
 
 // Añadir el plano a la escena
   scene.add(plane);
+
+  // Initialize audio handler
+  audioHandler = new AudioHandler();
+  audioHandler.initialize().then(success => {
+      if (success) {
+          // Add the audio icon to the camera
+          camera.add(audioHandler.audioIcon);
+          
+          // Set up event listener for recorded audio
+          window.addEventListener('audioRecorded', (event) => {
+              const audioBlob = event.detail.audioBlob;
+              // Here you would send the audio to your chatbot service
+              console.log('Audio ready for processing:', audioBlob);
+          });
+      }
+  });
   
 /*
   //Codigo para el canvas en 2D------
@@ -170,6 +188,10 @@ function animate() {
 
   handleDrawing(stylus);
 
+  if (audioHandler) {
+    audioHandler.updateIconAnimation();
+  }
+
   // Render
   renderer.render(scene, camera);
 }
@@ -221,3 +243,23 @@ function debugGamepad(gamepad) {
     }
   });
 }
+
+// Add these controller event listeners for your VR controllers
+function setupControllerEvents() {
+  // Assuming you want to use the grip button (button 1) for recording
+  controller1.addEventListener('selectstart', () => {
+      audioHandler.startRecording();
+  });
+  
+  controller1.addEventListener('selectend', () => {
+      audioHandler.stopRecording();
+  });
+}
+
+// Add cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  if (audioHandler) {
+      audioHandler.dispose();
+  }
+});
+
