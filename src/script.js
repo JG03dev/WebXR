@@ -4,9 +4,7 @@ import { XRButton } from "three/examples/jsm/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/examples/jsm/webxr/XRControllerModelFactory.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { AudioHandler } from './audioHandler.js';
 
-let audioHandler;
 let camera, scene, renderer;
 let controller1, controller2;
 let controllerGrip1, controllerGrip2;
@@ -16,10 +14,13 @@ let gamepad1;
 let isDrawing = false;
 let prevIsDrawing = false;
 
-const material = new THREE.MeshNormalMaterial({
-  flatShading: true,
-  side: THREE.DoubleSide,
+const material = new THREE.MeshStandardMaterial({
+  color: new THREE.Color(0xff0000),
+  roughness: 0.4,
+  metalness: 0.1,
+  side: THREE.DoubleSide
 });
+
 
 const cursor = new THREE.Vector3();
 
@@ -111,21 +112,6 @@ function init() {
 
 // Añadir el plano a la escena
   scene.add(plane);
-
-   // Initialize audio handler (just basic setup)
-   audioHandler = new AudioHandler();
-   audioHandler.initialize().then(success => {
-       if (success) {
-           // Add the audio icon to the camera
-           camera.add(audioHandler.audioIcon);
-           
-           // Set up event listener for recorded audio
-           window.addEventListener('audioRecorded', (event) => {
-               const audioBlob = event.detail.audioBlob;
-               console.log('Audio ready for processing:', audioBlob);
-           });
-       }
-   });
 }
 
 window.addEventListener("resize", () => {
@@ -155,10 +141,6 @@ function animate() {
   }
 
   handleDrawing(stylus);
-
-  //if (audioHandler) {
-  audioHandler.updateIconAnimation();
-  //}
 
   // Render
   renderer.render(scene, camera);
@@ -215,25 +197,6 @@ function debugGamepad(gamepad) {
     }
   });
 }
-
-// Modify your controller event handler
-function setupControllerEvents() {
-  // Now the audio context will initialize on first controller interaction
-  controller1.addEventListener('selectstart', async () => {
-      await audioHandler.startRecording();
-  });
-  
-  controller1.addEventListener('selectend', () => {
-      audioHandler.stopRecording();
-  });
-}
-
-// Add cleanup on page unload
-window.addEventListener('beforeunload', () => {
-  if (audioHandler) {
-      audioHandler.dispose();
-  }
-});
 
 // Función para capturar la imagen
 function onCaptureImage() {
