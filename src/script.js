@@ -84,13 +84,14 @@ function init() {
   scene.add(controller2);
 
   // Crear el plano vertical (orientado verticalmente)
-  const geometry = new THREE.PlaneGeometry(5, 5);  // Plane con dimensiones 5x5
+  const geometry = new THREE.PlaneGeometry(2, 2);  // Plane con dimensiones 5x5
   const materialPlane = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde
   const plane = new THREE.Mesh(geometry, materialPlane);
 
   // Rotar el plano para que sea vertical
   plane.rotation.y = -Math.PI; // -90 grados sobre el eje X
   plane.position.x = 1; // Elevarlo un poco para que esté a la altura de la cámara
+  plane.position.z = 15;
 
 // Añadir el plano a la escena
   scene.add(plane);
