@@ -11,6 +11,7 @@ class AudioHandler {
         this.speechDetected = false;
         this.silenceTimer = null;
         this.recordingTimeout = null;
+        this.isInitialized = false;
         
         // Configurable parameters
         this.SILENCE_THRESHOLD = -50; // dB
@@ -20,12 +21,12 @@ class AudioHandler {
         // Create audio icon mesh
         const geometry = new THREE.CircleGeometry(0.05, 32);
         const material = new THREE.MeshBasicMaterial({ 
-            color: 0x0000ff,
-            transparent: false,
+            color: 0x00ff00,
+            transparent: true,
             opacity: 0.8
         });
         this.audioIcon = new THREE.Mesh(geometry, material);
-        this.audioIcon.position.set(0.2, 0.2, -0.5); // Position relative to camera
+        this.audioIcon.position.set(0.2, 0.2, -0.5);
         this.audioIcon.visible = false;
         
         // Animation properties
@@ -34,6 +35,14 @@ class AudioHandler {
     }
 
     async initialize() {
+        // Just create the audio icon and other non-audio setup
+        console.log('Basic initialization complete');
+        return true;
+    }
+
+    async initializeAudioContext() {
+        if (this.isInitialized) return true;
+
         try {
             // Initialize audio context
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -57,6 +66,7 @@ class AudioHandler {
             const source = this.audioContext.createMediaStreamSource(stream);
             source.connect(this.analyzer);
             
+            this.isInitialized = true;
             console.log('Audio system initialized');
             return true;
         } catch (error) {
@@ -65,8 +75,19 @@ class AudioHandler {
         }
     }
 
-    startRecording() {
+    async startRecording() {
+        // Initialize audio context on first recording attempt
+        if (!this.isInitialized) {
+            const success = await this.initializeAudioContext();
+            if (!success) return;
+        }
+
         if (this.isRecording) return;
+        
+        // Resume AudioContext if it was suspended
+        if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+        }
         
         this.isRecording = true;
         this.audioChunks = [];
@@ -97,6 +118,7 @@ class AudioHandler {
         // Start monitoring audio levels
         this.monitorAudioLevels();
     }
+
 
     stopRecording() {
         if (!this.isRecording) return;

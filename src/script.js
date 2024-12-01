@@ -112,21 +112,20 @@ function init() {
 // Añadir el plano a la escena
   scene.add(plane);
 
-  // Initialize audio handler
-  audioHandler = new AudioHandler();
-  audioHandler.initialize().then(success => {
-      if (success) {
-          // Add the audio icon to the camera
-          camera.add(audioHandler.audioIcon);
-          
-          // Set up event listener for recorded audio
-          window.addEventListener('audioRecorded', (event) => {
-              const audioBlob = event.detail.audioBlob;
-              // Here you would send the audio to your chatbot service
-              console.log('Audio ready for processing:', audioBlob);
-          });
-      }
-  });
+   // Initialize audio handler (just basic setup)
+   audioHandler = new AudioHandler();
+   audioHandler.initialize().then(success => {
+       if (success) {
+           // Add the audio icon to the camera
+           camera.add(audioHandler.audioIcon);
+           
+           // Set up event listener for recorded audio
+           window.addEventListener('audioRecorded', (event) => {
+               const audioBlob = event.detail.audioBlob;
+               console.log('Audio ready for processing:', audioBlob);
+           });
+       }
+   });
 }
 
 window.addEventListener("resize", () => {
@@ -217,11 +216,11 @@ function debugGamepad(gamepad) {
   });
 }
 
-// Add these controller event listeners for your VR controllers
+// Modify your controller event handler
 function setupControllerEvents() {
-  // Assuming you want to use the grip button (button 1) for recording
-  controller1.addEventListener('selectstart', () => {
-      audioHandler.startRecording();
+  // Now the audio context will initialize on first controller interaction
+  controller1.addEventListener('selectstart', async () => {
+      await audioHandler.startRecording();
   });
   
   controller1.addEventListener('selectend', () => {
