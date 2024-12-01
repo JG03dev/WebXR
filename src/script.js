@@ -123,51 +123,6 @@ function init() {
           });
       }
   });
-  
-/*
-  //Codigo para el canvas en 2D------
-  // Agregar un canvas 2D para dibujo
-const drawingCanvas = document.createElement("canvas");
-drawingCanvas.classList.add("drawing-canvas");
-document.body.appendChild(drawingCanvas);
-
-// Configuración inicial del canvas 2D
-const drawingCtx = drawingCanvas.getContext("2d");
-drawingCanvas.width = window.innerWidth;
-drawingCanvas.height = window.innerHeight;
-
-// Variables para dibujar
-let isDrawing2D = false;
-let lastX = 0;
-let lastY = 0;
-
-// Funciones de dibujo
-function startDrawing2D(e) {
-  isDrawing2D = true;
-  const { offsetX, offsetY } = getCanvasCoordinates(e);
-  [lastX, lastY] = [offsetX, offsetY];
-}
-
-function draw2D(e) {
-  if (!isDrawing2D) return;
-  const { offsetX, offsetY } = getCanvasCoordinates(e);
-
-  drawingCtx.strokeStyle = "red"; // Color del pincel
-  drawingCtx.lineWidth = 5; // Grosor del pincel
-  drawingCtx.lineJoin = "round";
-  drawingCtx.lineCap = "round";
-
-  drawingCtx.beginPath();
-  drawingCtx.moveTo(lastX, lastY);
-  drawingCtx.lineTo(offsetX, offsetY);
-  drawingCtx.stroke();
-  [lastX, lastY] = [offsetX, offsetY];
-}
-
-function stopDrawing2D() {
-  isDrawing2D = false;
-  drawingCtx.beginPath(); // Limpia el path actual
-}*/
 }
 
 window.addEventListener("resize", () => {
@@ -206,6 +161,40 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+// Configura el raycaster y un vector para almacenar la intersección
+const raycaster = new THREE.Raycaster();
+const intersectPoint = new THREE.Vector3(); // Punto de intersección en el plano
+
+//funcion modificada (dibuja en 2D)
+function handleDrawing(controller) {
+  if (!controller) return;
+
+  const userData = controller.userData;
+  const painter = userData.painter;
+
+  // Configurar el raycaster desde la posición del controlador
+  const stylusPosition = stylus.position; // Posición del controlador
+  const stylusDirection = new THREE.Vector3();
+  stylusDirection.subVectors(stylusPosition, camera.position).normalize(); // Dirección del rayo desde el controlador
+
+  raycaster.set(stylusPosition, stylusDirection);
+
+  // Detectar intersección con el plano
+  const intersects = raycaster.intersectObject(plane); // `plane` es el Mesh del plano
+
+  if (intersects.length > 0) {
+    // Si hay intersección, usa el punto de intersección
+    intersectPoint.copy(intersects[0].point); // Copiar el punto de intersección
+
+    if (userData.isSelecting || isDrawing) {
+      // Dibujar solo en el plano
+      painter.lineTo(intersectPoint);
+      painter.update();
+    }
+  }
+}
+
+/* funcion original sin modificar (dibuja en 3d)
 function handleDrawing(controller) {
   if (!controller) return;
 
@@ -222,7 +211,7 @@ function handleDrawing(controller) {
     }
   }
 }
-
+*/
 function onControllerConnected(e) {
   if (e.data.profiles.includes("logitech-mx-ink")) {
     stylus = e.target;
