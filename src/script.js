@@ -172,25 +172,27 @@ function handleDrawing(controller) {
   const userData = controller.userData;
   const painter = userData.painter;
 
-  // Configurar el raycaster desde la posición del controlador
-  const stylusPosition = stylus.position; // Posición del controlador
+  // Configurar el raycaster desde el stylus
+  const stylusPosition = stylus.position.clone(); // Copiar posición actual del stylus
   const stylusDirection = new THREE.Vector3();
-  stylusDirection.subVectors(stylusPosition, camera.position).normalize(); // Dirección del rayo desde el controlador
+  stylusDirection.subVectors(stylusPosition, camera.position).normalize(); // Dirección del rayo
 
   raycaster.set(stylusPosition, stylusDirection);
 
   // Detectar intersección con el plano
-  const intersects = raycaster.intersectObject(plane); // `plane` es el Mesh del plano
+  const intersects = raycaster.intersectObject(plane); // Asegúrate de que `plane` esté definido
 
   if (intersects.length > 0) {
-    // Si hay intersección, usa el punto de intersección
+    // Si hay intersección
     intersectPoint.copy(intersects[0].point); // Copiar el punto de intersección
 
     if (userData.isSelecting || isDrawing) {
-      // Dibujar solo en el plano
+      // Dibujar solo si está en modo de dibujo
       painter.lineTo(intersectPoint);
       painter.update();
     }
+  } else {
+    console.warn("No intersection detected with the plane.");
   }
 }
 
