@@ -84,6 +84,10 @@ function init() {
     plane.position.y = 1.5;
     plane.position.z = -1;
 
+    // Add a helper to visualize the plane
+    const planeHelper = new THREE.AxesHelper(1);
+    plane.add(planeHelper);
+
     scene.add(plane);
   });
 
@@ -112,7 +116,26 @@ function animate() {
     isDrawing = gamepad1.buttons[5].value > 0;
     
     if (isDrawing) {
-      drawOnTexture(stylus.position);
+      // Create a raycaster to check if the controller is touching the plane
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      
+      const intersects = raycaster.intersectObject(plane);
+      
+      if (intersects.length > 0) {
+        // Get the intersection point in the plane's local space
+        const localPoint = plane.worldToLocal(intersects[0].point.clone());
+        
+        // Map local coordinates to texture coordinates
+        const textureX = (localPoint.x + 1.5) / 3 * 1024;
+        const textureY = (1 - (localPoint.y + 1) / 2) * 1024;
+        
+        // Draw on the texture
+        drawOnTexture(textureX, textureY);
+        
+        // Optional: log for debugging
+        console.log('Drawing at:', textureX, textureY);
+      }
     }
   }
 
@@ -124,19 +147,11 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-function drawOnTexture(position) {
+function drawOnTexture(x, y) {
   if (!drawingTexture) return;
 
   const canvas = drawingTexture.image;
   const ctx = canvas.getContext('2d');
-
-  // Convert 3D position to 2D texture coordinates
-  const canvasWidth = canvas.width;
-  const canvasHeight = canvas.height;
-
-  // Normalize and map position to texture coordinates
-  const normalizedX = (position.x + 1.5) / 3 * canvasWidth;
-  const normalizedY = (1 - (position.y - 0.5) / 2) * canvasHeight;
 
   // Drawing settings
   ctx.beginPath();
@@ -147,13 +162,13 @@ function drawOnTexture(position) {
   // Draw line if we have a previous position
   if (lastX !== undefined && lastY !== undefined) {
     ctx.moveTo(lastX, lastY);
-    ctx.lineTo(normalizedX, normalizedY);
+    ctx.lineTo(x, y);
     ctx.stroke();
   }
 
   // Store current position
-  lastX = normalizedX;
-  lastY = normalizedY;
+  lastX = x;
+  lastY = y;
 }
 
 function onControllerConnected(e) {
@@ -169,6 +184,8 @@ function onSelectStart(e) {
   // Reset last position
   lastX = undefined;
   lastY = undefined;
+  
+  console.log('Select start - trying to draw');
 }
 
 function onSelectEnd() {
