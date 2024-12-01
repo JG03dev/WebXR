@@ -90,8 +90,8 @@ function init() {
 
   // Rotar el plano para que sea vertical
   plane.rotation.y = -Math.PI; // -90 grados sobre el eje X
-  plane.position.x = 1; // Elevarlo un poco para que esté a la altura de la cámara
-  plane.position.z = -5;
+  plane.position.y = 2;
+  plane.position.z = -2;
 
 // Añadir el plano a la escena
   scene.add(plane);
