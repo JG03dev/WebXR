@@ -14,24 +14,29 @@ class AudioHandler {
         this.isInitialized = false;
         
         // Configurable parameters
-        this.SILENCE_THRESHOLD = -50; // dB
-        this.SILENCE_DURATION = 1000; // ms to wait before stopping
-        this.MAX_RECORDING_TIME = 30000; // ms maximum recording time
+        this.SILENCE_THRESHOLD = -50;
+        this.SILENCE_DURATION = 1000;
+        this.MAX_RECORDING_TIME = 30000;
         
-        // Create audio icon mesh
-        const geometry = new THREE.CircleGeometry(0.05, 32);
-        const material = new THREE.MeshBasicMaterial({ 
+        // Create a sprite for the audio icon
+        const spriteMaterial = new THREE.SpriteMaterial({
             color: 0x00ff00,
             transparent: true,
             opacity: 0.8
         });
-        this.audioIcon = new THREE.Mesh(geometry, material);
+        this.audioIcon = new THREE.Sprite(spriteMaterial);
+        this.audioIcon.scale.set(0.05, 0.05, 1);
+        
+        // Position the sprite relative to the camera
+        // These values can be adjusted to change the position in VR view
         this.audioIcon.position.set(0.2, 0.2, -0.5);
-        this.audioIcon.visible = true;
+        this.audioIcon.visible = false;
         
         // Animation properties
-        this.pulseScale = 1;
+        this.pulseScale = 0.05;
         this.pulseDirection = 1;
+        this.minScale = 0.04;
+        this.maxScale = 0.06;
     }
 
     async initialize() {
@@ -164,14 +169,25 @@ class AudioHandler {
     }
 
     updateIconAnimation() {
-        if (!this.isRecording) return;
+        if (!this.isRecording || !this.audioIcon.visible) return;
         
-        // Pulse animation
-        this.pulseScale += 0.5 * this.pulseDirection;
-        if (this.pulseScale > 10.2) this.pulseDirection = -1;
-        if (this.pulseScale < 0.8) this.pulseDirection = 1;
+        // Update pulse animation
+        this.pulseScale += 0.001 * this.pulseDirection;
         
+        if (this.pulseScale > this.maxScale) {
+            this.pulseDirection = -1;
+        } else if (this.pulseScale < this.minScale) {
+            this.pulseDirection = 1;
+        }
+        
+        // Apply scale uniformly to the sprite
         this.audioIcon.scale.set(this.pulseScale, this.pulseScale, 1);
+    }
+
+    setIconColor(color) {
+        if (this.audioIcon && this.audioIcon.material) {
+            this.audioIcon.material.color.set(color);
+        }
     }
 
     async playAudioResponse(audioBuffer) {
@@ -182,10 +198,12 @@ class AudioHandler {
             source.start(0);
             
             // Visual feedback during playback
-            this.audioIcon.material.color.setHex(0x0000ff); // Blue during playback
+            this.setIconColor(0x0000ff); // Blue during playback
+            this.audioIcon.visible = true;
             
             source.onended = () => {
-                this.audioIcon.material.color.setHex(0x00ff00); // Back to green
+                this.setIconColor(0x00ff00); // Back to green
+                this.audioIcon.visible = false;
             };
         } catch (error) {
             console.error('Error playing audio:', error);
