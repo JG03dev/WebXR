@@ -87,7 +87,17 @@ function init() {
 
   // Crear el plano vertical (orientado verticalmente)
   const geometry = new THREE.PlaneGeometry(2, 2);  // Plane con dimensiones 2x2
-  const materialPlane = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde
+  const textureLoader = new THREE.TextureLoader();
+
+  const texture = textureLoader.load('textures/Barcos.jpg'); // Ruta de tu imagen
+  // Crear el material con la textura (imagen)
+  const materialPlane = new THREE.MeshBasicMaterial({ 
+      map: texture, 
+      side: THREE.DoubleSide // Visible desde ambos lados
+  });
+  /* comentado para color solido
+  const materialPlane = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde (color solido)
+  */
   const plane = new THREE.Mesh(geometry, materialPlane);
 
   // Rotar el plano para que sea vertical
