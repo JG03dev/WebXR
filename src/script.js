@@ -13,6 +13,11 @@ let gamepad1;
 let stylus;
 let lastX, lastY;
 
+const drawingSettings = {
+  brushColor: 'rgba(255, 0, 0, 0.8)',  // Bright red with transparency
+  brushSize: 15
+};
+
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
@@ -109,6 +114,11 @@ function animate() {
   if (gamepad1 && stylus) {
     isDrawing = gamepad1.buttons[5].value > 0;
     
+    // Check for clear drawing (using secondary button)
+    if (gamepad1.buttons[4].pressed) {
+      clearDrawing();
+    }
+    
     if (isDrawing) {
       // Create a raycaster from the controller's direction
       const raycaster = new THREE.Raycaster(
@@ -150,9 +160,10 @@ function drawOnTexture(x, y) {
 
   // Drawing settings
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';  // Semi-transparent red
-  ctx.lineWidth = 10;  // Brush size
+  ctx.strokeStyle = drawingSettings.brushColor;
+  ctx.lineWidth = drawingSettings.brushSize;
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';  // Smoother line connections
 
   // Draw line if we have a previous position
   if (lastX !== undefined && lastY !== undefined) {
@@ -164,6 +175,19 @@ function drawOnTexture(x, y) {
   // Store current position
   lastX = x;
   lastY = y;
+}
+
+function clearDrawing() {
+  if (!drawingTexture) return;
+
+  const canvas = drawingTexture.image;
+  const ctx = canvas.getContext('2d');
+  
+  // Clear the entire canvas while preserving the base image
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(baseTexture.image, 0, 0, canvas.width, canvas.height);
+  
+  drawingTexture.needsUpdate = true;
 }
 
 function onControllerConnected(e) {
@@ -194,3 +218,12 @@ window.addEventListener('beforeunload', () => {
     audioHandler.dispose();
   }
 });
+
+// Optional: Expose drawing settings for potential future UI interaction
+export function setDrawingColor(color) {
+  drawingSettings.brushColor = color;
+}
+
+export function setBrushSize(size) {
+  drawingSettings.brushSize = size;
+}
