@@ -28,117 +28,6 @@ const sizes = {
 
 init();
 
-// Add these at the top of your script.js
-let ws;
-const SERVER_URL = 'ws://webxr-server-fwpv.onrender.com:10000'; // Change this to your server's URL in production
-
-function initWebSocket() {
-  ws = new WebSocket(SERVER_URL);
-
-  ws.onopen = () => {
-    console.log('Connected to WebSocket server');
-  };
-
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    handleWebSocketMessage(data);
-  };
-
-  ws.onclose = () => {
-    console.log('WebSocket connection closed');
-    // Attempt to reconnect after a delay
-    setTimeout(initWebSocket, 3000);
-  };
-
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-}
-
-function handleWebSocketMessage(data) {
-  if (data.type === 'draw') {
-    const remotePosition = new THREE.Vector3(
-      data.position.x,
-      data.position.y,
-      data.position.z
-    );
-    
-    if (data.action === 'moveTo') {
-      painter1.moveTo(remotePosition);
-    } else if (data.action === 'lineTo') {
-      painter1.lineTo(remotePosition);
-      painter1.update();
-    }
-  } else if (data.type === 'history') {
-    // Replay drawing history
-    data.data.forEach(drawAction => {
-      const position = new THREE.Vector3(
-        drawAction.position.x,
-        drawAction.position.y,
-        drawAction.position.z
-      );
-      
-      if (drawAction.action === 'moveTo') {
-        painter1.moveTo(position);
-      } else if (drawAction.action === 'lineTo') {
-        painter1.lineTo(position);
-        painter1.update();
-      }
-    });
-  }
-}
-
-// Modify your handleDrawing function
-function handleDrawing(controller) {
-  if (!controller) return;
-
-  const userData = controller.userData;
-  const painter = userData.painter;
-
-  if (gamepad1) {
-    cursor.set(stylus.position.x, stylus.position.y, stylus.position.z);
-
-    if (userData.isSelecting || isDrawing) {
-      painter.lineTo(cursor);
-      painter.update();
-      
-      // Send drawing data to server
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'draw',
-          action: 'lineTo',
-          position: {
-            x: cursor.x,
-            y: cursor.y,
-            z: cursor.z
-          }
-        }));
-      }
-    }
-  }
-}
-
-// Modify your onSelectStart function
-function onSelectStart(e) {
-  if (e.target !== stylus) return;
-  const painter = stylus.userData.painter;
-  painter.moveTo(stylus.position);
-  this.userData.isSelecting = true;
-  
-  // Send initial position to server
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: 'draw',
-      action: 'moveTo',
-      position: {
-        x: stylus.position.x,
-        y: stylus.position.y,
-        z: stylus.position.z
-      }
-    }));
-  }
-}
-
 function init() {
   const canvas = document.querySelector("canvas.webgl");
   scene = new THREE.Scene();
@@ -193,8 +82,14 @@ function init() {
   controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
   scene.add(controllerGrip2);
   scene.add(controller2);
-  initWebSocket();
 
+  // Crear el plano vertical (orientado verticalmente)
+  const geometry = new THREE.PlaneGeometry(5, 5);  // Plane con dimensiones 5x5
+  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde
+  const plane = new THREE.Mesh(geometry, material);
+
+  // Rotar el plano para que sea vertical (rotación sobre el eje X)
+  plane.rotation.x = Math.PI / 2; // 90 grados, lo pone en vertical
 /*
   //Codigo para el canvas en 2D------
   // Agregar un canvas 2D para dibujo
@@ -273,7 +168,22 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+function handleDrawing(controller) {
+  if (!controller) return;
 
+  const userData = controller.userData;
+  const painter = userData.painter;
+
+  if (gamepad1) {
+    cursor.set(stylus.position.x, stylus.position.y, stylus.position.z);
+
+    if (userData.isSelecting || isDrawing) {
+
+      painter.lineTo(cursor);
+      painter.update();
+    }
+  }
+}
 
 function onControllerConnected(e) {
   if (e.data.profiles.includes("logitech-mx-ink")) {
@@ -283,6 +193,12 @@ function onControllerConnected(e) {
   }
 }
 
+function onSelectStart(e) {
+  if (e.target !== stylus) return;
+  const painter = stylus.userData.painter;
+  painter.moveTo(stylus.position);
+  this.userData.isSelecting = true;
+}
 
 function onSelectEnd() {
   this.userData.isSelecting = false;
