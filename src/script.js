@@ -1,8 +1,6 @@
 import * as THREE from "three";
 import { XRButton } from "three/examples/jsm/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/examples/jsm/webxr/XRControllerModelFactory.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { AudioHandler } from './audioHandler.js';
 
 let audioHandler;
@@ -84,10 +82,6 @@ function init() {
     plane.position.y = 1.5;
     plane.position.z = -1;
 
-    // Add a helper to visualize the plane
-    const planeHelper = new THREE.AxesHelper(1);
-    plane.add(planeHelper);
-
     scene.add(plane);
   });
 
@@ -116,25 +110,26 @@ function animate() {
     isDrawing = gamepad1.buttons[5].value > 0;
     
     if (isDrawing) {
-      // Create a raycaster to check if the controller is touching the plane
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      // Create a raycaster from the controller's direction
+      const raycaster = new THREE.Raycaster(
+        stylus.position, 
+        stylus.getWorldDirection(new THREE.Vector3())
+      );
       
       const intersects = raycaster.intersectObject(plane);
       
       if (intersects.length > 0) {
-        // Get the intersection point in the plane's local space
-        const localPoint = plane.worldToLocal(intersects[0].point.clone());
+        // Get the intersection point in world space
+        const intersectionPoint = intersects[0].point;
         
-        // Map local coordinates to texture coordinates
+        // Convert world coordinates to texture coordinates
+        const localPoint = plane.worldToLocal(intersectionPoint.clone());
+        
         const textureX = (localPoint.x + 1.5) / 3 * 1024;
         const textureY = (1 - (localPoint.y + 1) / 2) * 1024;
         
         // Draw on the texture
         drawOnTexture(textureX, textureY);
-        
-        // Optional: log for debugging
-        console.log('Drawing at:', textureX, textureY);
       }
     }
   }
@@ -184,8 +179,6 @@ function onSelectStart(e) {
   // Reset last position
   lastX = undefined;
   lastY = undefined;
-  
-  console.log('Select start - trying to draw');
 }
 
 function onSelectEnd() {
