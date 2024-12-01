@@ -167,8 +167,8 @@ class AudioHandler {
         if (!this.isRecording) return;
         
         // Pulse animation
-        this.pulseScale += 0.05 * this.pulseDirection;
-        if (this.pulseScale > 1.2) this.pulseDirection = -1;
+        this.pulseScale += 0.5 * this.pulseDirection;
+        if (this.pulseScale > 10.2) this.pulseDirection = -1;
         if (this.pulseScale < 0.8) this.pulseDirection = 1;
         
         this.audioIcon.scale.set(this.pulseScale, this.pulseScale, 1);

@@ -156,9 +156,9 @@ function animate() {
 
   handleDrawing(stylus);
 
-  if (audioHandler) {
-    audioHandler.updateIconAnimation();
-  }
+  //if (audioHandler) {
+  audioHandler.updateIconAnimation();
+  //}
 
   // Render
   renderer.render(scene, camera);
