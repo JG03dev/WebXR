@@ -82,7 +82,7 @@ function init() {
   controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
   scene.add(controllerGrip2);
   scene.add(controller2);
-
+/*
   //Codigo para el canvas en 2D------
   // Agregar un canvas 2D para dibujo
 const drawingCanvas = document.createElement("canvas");
@@ -93,7 +93,7 @@ document.body.appendChild(drawingCanvas);
 const drawingCtx = drawingCanvas.getContext("2d");
 drawingCanvas.width = window.innerWidth;
 drawingCanvas.height = window.innerHeight;
-/*
+
 // Variables para dibujar
 let isDrawing2D = false;
 let lastX = 0;
