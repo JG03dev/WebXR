@@ -1,22 +1,27 @@
 import * as THREE from "three";
+import { TubePainter } from "three/examples/jsm/misc/TubePainter.js";
 import { XRButton } from "three/examples/jsm/webxr/XRButton.js";
 import { XRControllerModelFactory } from "three/examples/jsm/webxr/XRControllerModelFactory.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { AudioHandler } from './audioHandler.js';
 
 let audioHandler;
 let camera, scene, renderer;
 let controller1, controller2;
 let controllerGrip1, controllerGrip2;
-let plane, baseTexture, drawingTexture;
-let isDrawing = false;
-let gamepad1;
 let stylus;
-let lastX, lastY;
+let painter1;
+let gamepad1;
+let isDrawing = false;
+let prevIsDrawing = false;
 
-const drawingSettings = {
-  brushColor: 'rgba(255, 0, 0, 0.8)',  // Bright red with transparency
-  brushSize: 15
-};
+const material = new THREE.MeshNormalMaterial({
+  flatShading: true,
+  side: THREE.DoubleSide,
+});
+
+const cursor = new THREE.Vector3();
 
 const sizes = {
   width: window.innerWidth,
@@ -31,6 +36,27 @@ function init() {
   scene.background = new THREE.Color(0x222222);
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.01, 50);
   camera.position.set(0, 1.6, 3);
+
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath("/draco/");
+
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.setDRACOLoader(dracoLoader);
+
+  const grid = new THREE.GridHelper(4, 1, 0x111111, 0x111111);
+  scene.add(grid);
+
+  scene.add(new THREE.HemisphereLight(0x888877, 0x777788, 3));
+
+  const light = new THREE.DirectionalLight(0xffffff, 1.5);
+  light.position.set(0, 4, 0);
+  scene.add(light);
+
+  painter1 = new TubePainter();
+  painter1.mesh.material = material;
+  painter1.setSize(0.1);
+
+  scene.add(painter1.mesh);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
   renderer.setPixelRatio(window.devicePixelRatio, 2);
@@ -59,171 +85,146 @@ function init() {
   scene.add(controllerGrip2);
   scene.add(controller2);
 
-  // Create a canvas for drawing
-  const drawingCanvas = document.createElement('canvas');
-  drawingCanvas.width = 1024;  // Matches texture size
-  drawingCanvas.height = 1024;
-  const drawingContext = drawingCanvas.getContext('2d');
-  
-  // Load base texture
+  // Crear el plano vertical (orientado verticalmente)
+  const geometry = new THREE.PlaneGeometry(3, 2);  // Plane con dimensiones 2x2
   const textureLoader = new THREE.TextureLoader();
-  baseTexture = textureLoader.load('textures/Barcos.jpg', (texture) => {
-    // Once texture is loaded, draw its content to the canvas
-    drawingContext.drawImage(texture.image, 0, 0, drawingCanvas.width, drawingCanvas.height);
-    
-    // Create drawing texture
-    drawingTexture = new THREE.CanvasTexture(drawingCanvas);
-    drawingTexture.minFilter = THREE.LinearFilter;
 
-    // Create the plane with combined texture
-    const geometry = new THREE.PlaneGeometry(3, 2);
-    const materialPlane = new THREE.MeshBasicMaterial({ 
-      map: drawingTexture,
-      side: THREE.DoubleSide
-    });
-
-    plane = new THREE.Mesh(geometry, materialPlane);
-    plane.rotation.y = -Math.PI;
-    plane.position.y = 1.5;
-    plane.position.z = -1;
-
-    scene.add(plane);
+  const texture = textureLoader.load('textures/Barcos.jpg'); // Ruta de tu imagen
+  // Crear el material con la textura (imagen)
+  const materialPlane = new THREE.MeshBasicMaterial({ 
+      map: texture, 
+      side: THREE.DoubleSide // Visible desde ambos lados
   });
+  /* comentado para color solido
+  const materialPlane = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde (color solido)
+  */
+  const plane = new THREE.Mesh(geometry, materialPlane);
+
+  // Rotar el plano para que sea vertical
+  plane.rotation.y = -Math.PI; // -90 grados sobre el eje X
+  plane.position.y = 1,5;
+  plane.position.z = -1;
+
+// Añadir el plano a la escena
+  scene.add(plane);
 
   // Initialize audio handler
   audioHandler = new AudioHandler();
   audioHandler.initialize().then(success => {
-    if (success) {
-      camera.add(audioHandler.audioIcon);
-    }
+      if (success) {
+          // Add the audio icon to the camera
+          camera.add(audioHandler.audioIcon);
+          
+          // Set up event listener for recorded audio
+          window.addEventListener('audioRecorded', (event) => {
+              const audioBlob = event.detail.audioBlob;
+              // Here you would send the audio to your chatbot service
+              console.log('Audio ready for processing:', audioBlob);
+          });
+      }
   });
 }
 
 window.addEventListener("resize", () => {
+  // Update sizes
   sizes.width = window.innerWidth;
   sizes.height = window.innerHeight;
 
+  // Update camera
   camera.aspect = sizes.width / sizes.height;
   camera.updateProjectionMatrix();
 
+  // Update renderer
   renderer.setSize(sizes.width, sizes.height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
 function animate() {
-  if (gamepad1 && stylus) {
+  if (gamepad1) {
+    prevIsDrawing = isDrawing;
     isDrawing = gamepad1.buttons[5].value > 0;
-    
-    // Check for clear drawing (using secondary button)
-    if (gamepad1.buttons[4].pressed) {
-      clearDrawing();
-    }
-    
-    if (isDrawing) {
-      // Create a raycaster from the controller's direction
-      const raycaster = new THREE.Raycaster(
-        stylus.position, 
-        stylus.getWorldDirection(new THREE.Vector3())
-      );
-      
-      const intersects = raycaster.intersectObject(plane);
-      
-      if (intersects.length > 0) {
-        // Get the intersection point in world space
-        const intersectionPoint = intersects[0].point;
-        
-        // Convert world coordinates to texture coordinates
-        const localPoint = plane.worldToLocal(intersectionPoint.clone());
-        
-        const textureX = (localPoint.x + 1.5) / 3 * 1024;
-        const textureY = (1 - (localPoint.y + 1) / 2) * 1024;
-        
-        // Draw on the texture
-        drawOnTexture(textureX, textureY);
-      }
+    // debugGamepad(gamepad1);
+
+    if (isDrawing && !prevIsDrawing) {
+      const painter = stylus.userData.painter;
+      painter.moveTo(stylus.position);
     }
   }
 
-  // Update drawing texture
-  if (drawingTexture) {
-    drawingTexture.needsUpdate = true;
+  handleDrawing(stylus);
+
+  if (audioHandler) {
+    audioHandler.updateIconAnimation();
   }
 
+  // Render
   renderer.render(scene, camera);
 }
 
-function drawOnTexture(x, y) {
-  if (!drawingTexture) return;
+function handleDrawing(controller) {
+  if (!controller) return;
 
-  const canvas = drawingTexture.image;
-  const ctx = canvas.getContext('2d');
+  const userData = controller.userData;
+  const painter = userData.painter;
 
-  // Drawing settings
-  ctx.beginPath();
-  ctx.strokeStyle = drawingSettings.brushColor;
-  ctx.lineWidth = drawingSettings.brushSize;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';  // Smoother line connections
+  if (gamepad1) {
+    cursor.set(stylus.position.x, stylus.position.y, stylus.position.z);
 
-  // Draw line if we have a previous position
-  if (lastX !== undefined && lastY !== undefined) {
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    if (userData.isSelecting || isDrawing) {
+
+      painter.lineTo(cursor);
+      painter.update();
+    }
   }
-
-  // Store current position
-  lastX = x;
-  lastY = y;
-}
-
-function clearDrawing() {
-  if (!drawingTexture) return;
-
-  const canvas = drawingTexture.image;
-  const ctx = canvas.getContext('2d');
-  
-  // Clear the entire canvas while preserving the base image
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(baseTexture.image, 0, 0, canvas.width, canvas.height);
-  
-  drawingTexture.needsUpdate = true;
 }
 
 function onControllerConnected(e) {
   if (e.data.profiles.includes("logitech-mx-ink")) {
     stylus = e.target;
+    stylus.userData.painter = painter1;
     gamepad1 = e.data.gamepad;
   }
 }
 
 function onSelectStart(e) {
   if (e.target !== stylus) return;
-  isDrawing = true;
-  // Reset last position
-  lastX = undefined;
-  lastY = undefined;
+  const painter = stylus.userData.painter;
+  painter.moveTo(stylus.position);
+  this.userData.isSelecting = true;
 }
 
 function onSelectEnd() {
-  isDrawing = false;
-  // Reset last position
-  lastX = undefined;
-  lastY = undefined;
+  this.userData.isSelecting = false;
+}
+
+function debugGamepad(gamepad) {
+  gamepad.buttons.forEach((btn, index) => {
+    if (btn.pressed) {
+      console.log(`BTN ${index} - Pressed: ${btn.pressed} - Touched: ${btn.touched} - Value: ${btn.value}`);
+    }
+
+    if (btn.touched) {
+      console.log(`BTN ${index} - Pressed: ${btn.pressed} - Touched: ${btn.touched} - Value: ${btn.value}`);
+    }
+  });
+}
+
+// Add these controller event listeners for your VR controllers
+function setupControllerEvents() {
+  // Assuming you want to use the grip button (button 1) for recording
+  controller1.addEventListener('selectstart', () => {
+      audioHandler.startRecording();
+  });
+  
+  controller1.addEventListener('selectend', () => {
+      audioHandler.stopRecording();
+  });
 }
 
 // Add cleanup on page unload
 window.addEventListener('beforeunload', () => {
   if (audioHandler) {
-    audioHandler.dispose();
+      audioHandler.dispose();
   }
 });
 
-// Optional: Expose drawing settings for potential future UI interaction
-export function setDrawingColor(color) {
-  drawingSettings.brushColor = color;
-}
-
-export function setBrushSize(size) {
-  drawingSettings.brushSize = size;
-}
