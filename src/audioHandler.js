@@ -20,7 +20,7 @@ class AudioHandler {
         // Create audio icon mesh
         const geometry = new THREE.CircleGeometry(0.05, 32);
         const material = new THREE.MeshBasicMaterial({ 
-            color: 0xff0000,
+            color: 0x0000ff,
             transparent: false,
             opacity: 0.8
         });
