@@ -85,8 +85,8 @@ function init() {
 
   // Crear el plano vertical (orientado verticalmente)
   const geometry = new THREE.PlaneGeometry(5, 5);  // Plane con dimensiones 5x5
-  const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde
-  const plane = new THREE.Mesh(geometry, material);
+  const materialPlane = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Material verde
+  const plane = new THREE.Mesh(geometry, materialPlane);
 
   // Rotar el plano para que sea vertical (rotación sobre el eje X)
   plane.rotation.x = Math.PI / 2; // 90 grados, lo pone en vertical
