@@ -71,6 +71,10 @@ function init() {
   controller1.addEventListener("connected", onControllerConnected);
   controller1.addEventListener("selectstart", onSelectStart);
   controller1.addEventListener("selectend", onSelectEnd);
+  
+  // Evento para guardar la imagen
+  controller1.addEventListener("selectstart", onCaptureImage);
+
   controllerGrip1 = renderer.xr.getControllerGrip(0);
   controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
   scene.add(controllerGrip1);
@@ -227,3 +231,19 @@ window.addEventListener('beforeunload', () => {
       audioHandler.dispose();
   }
 });
+
+// Función para capturar la imagen
+function onCaptureImage() {
+  // Capturar el lienzo como una imagen
+  const imageData = renderer.domElement.toDataURL("image/png");
+
+  // Crear un enlace para descargar la imagen
+  const link = document.createElement("a");
+  link.href = imageData;
+  link.download = "captura_vr.png";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  console.log("Imagen capturada y guardada.");
+}
