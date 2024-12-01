@@ -27,7 +27,7 @@ class AudioHandler {
         });
         this.audioIcon = new THREE.Mesh(geometry, material);
         this.audioIcon.position.set(0.2, 0.2, -0.5);
-        this.audioIcon.visible = false;
+        this.audioIcon.visible = true;
         
         // Animation properties
         this.pulseScale = 1;
