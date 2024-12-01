@@ -102,7 +102,7 @@ function init() {
 
   // Rotar el plano para que sea vertical
   plane.rotation.y = -Math.PI; // -90 grados sobre el eje X
-  plane.position.y = 1.45;
+  plane.position.y = 1.30;
   plane.position.z = -1;
 
 // Añadir el plano a la escena
