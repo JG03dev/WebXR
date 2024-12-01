@@ -89,8 +89,9 @@ function init() {
   const plane = new THREE.Mesh(geometry, materialPlane);
 
   // Rotar el plano para que sea vertical (rotación sobre el eje X)
-  plane.rotation.x = Math.PI / 2; // 90 grados, lo pone en vertical
   scene.add(plane);
+  plane.rotation.x = Math.PI / 2; // 90 grados, lo pone en vertical
+  
 /*
   //Codigo para el canvas en 2D------
   // Agregar un canvas 2D para dibujo
